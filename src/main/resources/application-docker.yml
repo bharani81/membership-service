@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/membership_db
+    username: membership_user
+    password: membership_pass
+
+logging:
+  level:
+    com.membership: INFO
