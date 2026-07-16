@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: membership-postgres
+    environment:
+      POSTGRES_DB: membership_db
+      POSTGRES_USER: membership_user
+      POSTGRES_PASSWORD: membership_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U membership_user -d membership_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - membership-net
+
+  membership-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: membership-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/membership_db
+      SPRING_DATASOURCE_USERNAME: membership_user
+      SPRING_DATASOURCE_PASSWORD: membership_pass
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate
+    ports:
+      - "8080:8080"
+    networks:
+      - membership-net
+    restart: on-failure
+
+volumes:
+  postgres_data:
+
+networks:
+  membership-net:
+    driver: bridge
